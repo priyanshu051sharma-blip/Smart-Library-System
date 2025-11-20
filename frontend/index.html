@@ -1,0 +1,2329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 Smart Library System - Secure 2FA Authentication</title>
+    <script async src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+            max-width: 500px;
+            width: 100%;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 35px 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.95;
+            font-weight: 500;
+        }
+
+        .content {
+            padding: 40px 30px;
+            min-height: 450px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e8edf2;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 13px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #f0f2f5;
+            color: #2c3e50;
+            border: 2px solid #e8edf2;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #e8edf2;
+            transform: translateY(-2px);
+        }
+
+        .btn-capture {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+        }
+
+        .btn-capture:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-logout {
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+        }
+
+        .btn-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(245, 87, 108, 0.4);
+        }
+
+        .message {
+            padding: 13px 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            animation: slideDown 0.3s ease;
+            border-left: 4px solid;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border-left-color: #28a745;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left-color: #dc3545;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left-color: #17a2b8;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 25px 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #e8edf2, transparent);
+        }
+
+        .divider-text {
+            position: relative;
+            background: white;
+            padding: 0 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #999;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .link-text {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .link-text a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .link-text a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
+        .video-container {
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        #liveVideo, #registrationVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .captured-image {
+            border-radius: 15px;
+            margin: 15px 0;
+            overflow: hidden;
+            background: #f0f0f0;
+            max-height: 200px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .captured-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f0f0f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            gap: 10px;
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .step::after {
+            content: '';
+            position: absolute;
+            right: -50%;
+            top: 20px;
+            width: calc(100% - 20px);
+            height: 2px;
+            background: #e8edf2;
+        }
+
+        .step:last-child::after {
+            display: none;
+        }
+
+        .step.active::after,
+        .step.completed::after {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: #e8edf2;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 8px;
+            font-weight: 700;
+            color: #999;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .step.active .step-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: scale(1.15);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .step.completed .step-number {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .step-label {
+            font-size: 11px;
+            color: #999;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .step.active .step-label {
+            color: #667eea;
+            font-weight: 700;
+        }
+
+        /* DASHBOARD STYLES */
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .dashboard-header h2 {
+            font-size: 26px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .dashboard-header p {
+            font-size: 13px;
+            opacity: 0.95;
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8edf2 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            border: 2px solid #e8edf2;
+        }
+
+        .user-info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .user-info-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-info-label {
+            color: #666;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .user-info-value {
+            color: #2c3e50;
+            font-weight: 700;
+        }
+
+        /* USER PHOTO STYLES */
+        .user-photo-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .user-photo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 5px solid white;
+            object-fit: cover;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            overflow: hidden;
+        }
+
+        .user-photo.no-photo {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8edf2 100%);
+            color: #999;
+        }
+
+        .user-photo-info {
+            color: white;
+        }
+
+        .user-photo-info h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .user-photo-info p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .books-section {
+            margin-top: 25px;
+        }
+
+        .books-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .no-books {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8edf2 100%);
+            border-radius: 15px;
+            color: #999;
+            border-left: 4px solid #667eea;
+            font-size: 14px;
+        }
+
+        .face-detection-status {
+            background: linear-gradient(135deg, #d1ecf1 0%, #e0f7ff 100%);
+            border-left: 4px solid #667eea;
+            padding: 13px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            color: #0c5460;
+            font-weight: 600;
+        }
+
+        .face-detection-status.loading {
+            background: linear-gradient(135deg, #fff3cd 0%, #fffadb 100%);
+            border-left-color: #ff9800;
+            color: #856404;
+        }
+
+        .face-detection-status.error {
+            background: linear-gradient(135deg, #f8d7da 0%, #ffe6e6 100%);
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+
+        .face-detection-status.success {
+            background: linear-gradient(135deg, #d4edda 0%, #e8f5e9 100%);
+            border-left-color: #28a745;
+            color: #155724;
+        }
+
+        /* BOOK MANAGEMENT STYLES */
+        .book-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 12px 20px;
+            border: 2px solid #e8edf2;
+            background: white;
+            color: #667eea;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+
+        .tab-button:hover {
+            border-color: #667eea;
+            background: #f5f7fa;
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .book-tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .book-tab-content.active {
+            display: block;
+        }
+
+        .book-tab-content h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .book-tab-content h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .book-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+            border-color: #667eea;
+        }
+
+        .book-cover {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .book-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .book-info {
+            padding: 12px;
+        }
+
+        .book-title {
+            font-weight: 700;
+            color: #2c3e50;
+            font-size: 13px;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .book-author {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .book-availability {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .availability-badge {
+            background: #4caf50;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .availability-badge.unavailable {
+            background: #f44336;
+        }
+
+        .issue-btn {
+            width: 100%;
+            padding: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .issue-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .book-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 95%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .modal-content h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .book-info-preview {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8edf2 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .book-info-preview h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .book-info-preview p {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .camera-preview {
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .camera-preview video {
+            width: 100%;
+            display: block;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background: #f5f5f5;
+            flex-wrap: wrap;
+        }
+
+        .camera-controls button {
+            flex: 1;
+            min-width: 100px;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .book-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e8edf2;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .book-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .status-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .status-message.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+
+        .status-message.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .status-message.info {
+            display: block;
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .borrowed-book-item {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8edf2 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .borrowed-book-details {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .borrowed-book-details h4 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .borrowed-book-details p {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
+
+        .borrowed-book-dates {
+            background: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .borrowed-book-dates .date-label {
+            color: #999;
+            font-weight: 600;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .borrowed-book-dates .date-value {
+            color: #2c3e50;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
+        .borrowed-book-dates.warning {
+            background: #fff3cd;
+        }
+
+        .borrowed-book-dates.alert {
+            background: #f8d7da;
+        }
+
+        .borrowed-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-return {
+            padding: 10px 15px;
+            background: #ff9800;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-return:hover {
+            background: #e68900;
+            transform: scale(1.02);
+        }
+
+        .books-list {
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 600px) {
+            .content {
+                padding: 30px 20px;
+                min-height: 400px;
+            }
+
+            .header {
+                padding: 25px 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .video-container {
+                aspect-ratio: 1;
+            }
+
+            .books-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+
+            .borrowed-book-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+
+            button {
+                padding: 11px 15px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- LOGIN PAGE -->
+        <div id="loginPage" class="page active">
+            <div class="header">
+                <h1>📚 Smart Library</h1>
+                <p>Two-Factor Authentication with Facial Recognition</p>
+            </div>
+
+            <div class="content">
+                <div id="loginMessage" class="message" style="display: none;"></div>
+
+                <div id="step1" class="step-indicator">
+                    <div class="step active">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Credentials</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Facial ID</div>
+                    </div>
+                </div>
+
+                <div id="emailPasswordForm">
+                    <form onsubmit="handleEmailPasswordLogin(event)">
+                        <div class="form-group">
+                            <label for="email">📧 Email Address</label>
+                            <input type="email" id="email" placeholder="your@email.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">🔐 Password</label>
+                            <input type="password" id="password" placeholder="Enter your password" required>
+                        </div>
+
+                        <button type="submit" class="btn-primary">✓ Verify Credentials</button>
+                    </form>
+
+                    <div class="divider">
+                        <div class="divider-text">New user?</div>
+                    </div>
+
+                    <div class="link-text">
+                        <a onclick="switchToRegistration()">Create an Account →</a>
+                    </div>
+                </div>
+
+                <div id="facialRecognitionForm" style="display: none;">
+                    <div class="face-detection-status" id="faceStatus">
+                        ℹ️ Initializing camera and facial recognition...
+                    </div>
+
+                    <div class="video-container">
+                        <video id="liveVideo" autoplay playsinline></video>
+                    </div>
+
+                    <button onclick="captureFace()" class="btn-primary btn-capture">📸 Capture Your Face</button>
+
+                    <div id="capturedImageDisplay"></div>
+
+                    <button id="verifyFacialBtn" onclick="handleFacialRecognition()" class="btn-primary btn-success" style="display: none; margin-top: 15px;">
+                        ✓ Verify & Login
+                    </button>
+
+                    <button onclick="backToEmailPassword()" class="btn-secondary">← Back to Email</button>
+                </div>
+            </div>
+
+            <div id="loginLoading" class="loading">
+                <div class="spinner"></div>
+                <p>Processing...</p>
+            </div>
+        </div>
+
+        <!-- REGISTRATION PAGE -->
+        <div id="registrationPage" class="page">
+            <div class="header">
+                <h1>📚 Smart Library</h1>
+                <p>Create Your Account</p>
+            </div>
+
+            <div class="content">
+                <div id="registrationMessage" class="message" style="display: none;"></div>
+
+                <div id="regSteps" class="step-indicator">
+                    <div class="step active">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Account Info</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Facial Capture</div>
+                    </div>
+                </div>
+
+                <div id="accountInfoForm">
+                    <form onsubmit="continueToFacialCapture(event)">
+                        <div class="form-group">
+                            <label for="regName">👤 Full Name</label>
+                            <input type="text" id="regName" placeholder="John Doe" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="regEnrollmentId">🎓 Enrollment ID</label>
+                            <input type="text" id="regEnrollmentId" placeholder="e.g., ST001234" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="regEmail">📧 Email Address</label>
+                            <input type="email" id="regEmail" placeholder="your@email.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="regPassword">🔐 Password</label>
+                            <input type="password" id="regPassword" placeholder="Min. 6 characters" required minlength="6">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="regPasswordConfirm">🔐 Confirm Password</label>
+                            <input type="password" id="regPasswordConfirm" placeholder="Confirm password" required>
+                        </div>
+
+                        <button type="submit" class="btn-primary">→ Continue to Facial Capture</button>
+                    </form>
+
+                    <div class="divider">
+                        <div class="divider-text">Have an account?</div>
+                    </div>
+
+                    <div class="link-text">
+                        <a onclick="switchToLogin()">Back to Login →</a>
+                    </div>
+                </div>
+
+                <div id="facialCaptureForm" style="display: none;">
+                    <div class="face-detection-status" id="regFaceStatus">
+                        ℹ️ Initializing camera for facial capture...
+                    </div>
+
+                    <div class="video-container">
+                        <video id="registrationVideo" autoplay playsinline></video>
+                    </div>
+
+                    <button onclick="captureRegistrationFace()" class="btn-primary btn-capture">📸 Capture Your Face</button>
+
+                    <div id="regCapturedImageDisplay"></div>
+
+                    <button id="completeRegistrationBtn" onclick="handleRegistration()" class="btn-primary btn-success" style="display: none; margin-top: 15px;">
+                        ✓ Complete Registration
+                    </button>
+
+                    <button onclick="backToAccountInfo()" class="btn-secondary">← Back</button>
+                </div>
+            </div>
+
+            <div id="registrationLoading" class="loading">
+                <div class="spinner"></div>
+                <p>Creating your account...</p>
+            </div>
+        </div>
+
+        <!-- DASHBOARD PAGE -->
+        <div id="dashboardPage" class="page">
+            <div class="header">
+                <h1>📚 Library Dashboard</h1>
+                <p>Welcome to Your Personal Library</p>
+            </div>
+
+            <div class="content">
+                <!-- USER PHOTO SECTION -->
+                <div class="user-photo-section">
+                    <div class="user-photo-container">
+                        <img id="userPhotoDisplay" class="user-photo no-photo" src="" alt="User Photo">
+                        <div class="user-photo-info">
+                            <h3 id="userPhotoName">Welcome!</h3>
+                            <p id="userPhotoEmail">Your account verified ✓</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-header">
+                    <h2 id="userGreeting">Welcome!</h2>
+                    <p>Your account is verified and secure ✓</p>
+                </div>
+
+                <div class="user-info">
+                    <div class="user-info-item">
+                        <span class="user-info-label">👤 Name:</span>
+                        <span class="user-info-value" id="dashName">-</span>
+                    </div>
+                    <div class="user-info-item">
+                        <span class="user-info-label">📧 Email:</span>
+                        <span class="user-info-value" id="dashEmail">-</span>
+                    </div>
+                    <div class="user-info-item">
+                        <span class="user-info-label">🎓 Enrollment ID:</span>
+                        <span class="user-info-value" id="dashEnrollmentId">-</span>
+                    </div>
+                    <div class="user-info-item">
+                        <span class="user-info-label">✓ 2FA Status:</span>
+                        <span class="user-info-value" style="color: #4caf50; font-weight: 700;">Verified ✓</span>
+                    </div>
+                </div>
+
+                <!-- TABS FOR BOOK MANAGEMENT -->
+                <div class="book-tabs">
+                    <button class="tab-button active" onclick="switchBookTab('borrowed')">📚 My Books</button>
+                    <button class="tab-button" onclick="switchBookTab('available')">➕ Issue Book</button>
+                </div>
+
+                <!-- MY BORROWED BOOKS TAB -->
+                <div id="borrowedBooksTab" class="book-tab-content active">
+                    <h3>📚 My Borrowed Books</h3>
+                    <div id="borrowedBooksList" class="books-list">
+                        <div class="no-books">Loading your books...</div>
+                    </div>
+                </div>
+
+                <!-- AVAILABLE BOOKS / ISSUE BOOK TAB -->
+                <div id="availableBookTab" class="book-tab-content">
+                    <h3>➕ Issue a Book</h3>
+                    
+                    <!-- BOOK SELECTION -->
+                    <div class="book-selection-section">
+                        <h4>📖 Select a Book</h4>
+                        <div id="availableBooksList" class="books-grid">
+                            <div class="no-books">Loading available books...</div>
+                        </div>
+                    </div>
+
+                    <!-- ISSUE BOOK MODAL -->
+                    <div id="issueBookModal" class="book-modal" style="display: none;">
+                        <div class="modal-content">
+                            <span class="close-btn" onclick="closeIssueModal()">&times;</span>
+                            <h3>📤 Issue Book</h3>
+                            
+                            <div class="modal-body">
+                                <div id="selectedBookInfo" class="book-info-preview"></div>
+                                
+                                <div class="form-group">
+                                    <label>📸 Capture Book Cover (Verification)</label>
+                                    <div class="camera-preview">
+                                        <video id="issueCameraFeed" width="100%" height="auto" autoplay playsinline></video>
+                                        <div class="camera-controls">
+                                            <button onclick="startIssueCameraCapture()" class="btn-primary">🎥 Start Camera</button>
+                                            <button onclick="captureIssuePhoto()" class="btn-primary" style="display:none;" id="captureIssueBtn">📸 Capture</button>
+                                            <button onclick="stopIssueCameraCapture()" class="btn-secondary" style="display:none;" id="stopIssueBtn">⏹ Stop</button>
+                                        </div>
+                                    </div>
+                                    <img id="issuePhotoPreview" style="display:none; width:100%; margin-top:10px; border-radius:8px;">
+                                </div>
+
+                                <div class="form-group">
+                                    <label>📛 Book Barcode</label>
+                                    <input type="text" id="issueBarcode" placeholder="Scan or enter barcode" class="book-input">
+                                </div>
+
+                                <div id="issueStatus" class="status-message"></div>
+
+                                <button onclick="submitIssueBook()" class="btn-primary" style="width:100%; margin-top:15px;">
+                                    ✓ Confirm Issue Book
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RETURN/REISSUE MODAL -->
+                <div id="returnBookModal" class="book-modal" style="display: none;">
+                    <div class="modal-content">
+                        <span class="close-btn" onclick="closeReturnModal()">&times;</span>
+                        <h3 id="returnModalTitle">📥 Return Book</h3>
+                        
+                        <div class="modal-body">
+                            <div id="returnBookInfo" class="book-info-preview"></div>
+                            
+                            <div class="form-group">
+                                <label>📸 Capture Book Cover (Verification)</label>
+                                <div class="camera-preview">
+                                    <video id="returnCameraFeed" width="100%" height="auto" autoplay playsinline></video>
+                                    <div class="camera-controls">
+                                        <button onclick="startReturnCameraCapture()" class="btn-primary">🎥 Start Camera</button>
+                                        <button onclick="captureReturnPhoto()" class="btn-primary" style="display:none;" id="captureReturnBtn">📸 Capture</button>
+                                        <button onclick="stopReturnCameraCapture()" class="btn-secondary" style="display:none;" id="stopReturnBtn">⏹ Stop</button>
+                                    </div>
+                                </div>
+                                <img id="returnPhotoPreview" style="display:none; width:100%; margin-top:10px; border-radius:8px;">
+                            </div>
+
+                            <div class="form-group">
+                                <label>📛 Book Barcode</label>
+                                <input type="text" id="returnBarcode" placeholder="Scan or enter barcode" class="book-input">
+                            </div>
+
+                            <div id="returnStatus" class="status-message"></div>
+
+                            <div class="modal-buttons">
+                                <button onclick="submitReturnBook()" class="btn-primary">
+                                    📥 Return Book
+                                </button>
+                                <button onclick="submitReissueBook()" class="btn-secondary">
+                                    🔄 Reissue (Extend)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="logout()" class="btn-logout">🚪 Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        
+        let modelsLoaded = false;
+        let modelsLoading = false;
+        let currentUserId = null;
+        let currentUser = null;
+        let facialDescriptor = null;
+        let facialData = null;
+        let stream = null;
+        let registrationFacialDescriptor = null;
+        let registrationFacialData = null;
+        
+        // Book management variables
+        let selectedBookForIssue = null;
+        let selectedBorrowingRecord = null;
+        let issueStreamActive = false;
+        let returnStreamActive = false;
+        let issuePhotoBase64 = null;
+        let returnPhotoBase64 = null;
+        let registrationStream = null;
+
+        // ============= FACE-API INITIALIZATION =============
+        async function loadFaceModels() {
+            if (modelsLoaded || modelsLoading) return;
+            
+            modelsLoading = true;
+            try {
+                console.log('🔄 Loading Face-API models from CDN...');
+                const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+                
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+                ]);
+                
+                modelsLoaded = true;
+                console.log('✅ Face-API models loaded successfully');
+                return true;
+            } catch (error) {
+                console.error('❌ Error loading Face-API models:', error.message);
+                modelsLoaded = false;
+                return false;
+            } finally {
+                modelsLoading = false;
+            }
+        }
+
+        // Load models on startup
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', async () => {
+                console.log('🚀 Initializing Face-API on page load...');
+                await loadFaceModels();
+            });
+        } else {
+            loadFaceModels();
+        }
+
+        window.addEventListener('load', async () => {
+            if (!modelsLoaded && !modelsLoading) {
+                console.log('🔄 Attempting Face-API models load on window load...');
+                await loadFaceModels();
+            }
+        });
+
+        // ============= FACIAL DESCRIPTOR EXTRACTION =============
+        async function extractFacialDescriptor(canvas) {
+            try {
+                // Wait for models to load - CRITICAL
+                if (!modelsLoaded) {
+                    console.log('⏳ Waiting for Face-API models to load...');
+                    let attempts = 0;
+                    const maxAttempts = 600; // 60 seconds
+                    while (!modelsLoaded && attempts < maxAttempts) {
+                        await new Promise(r => setTimeout(r, 100));
+                        attempts++;
+                    }
+                    
+                    if (!modelsLoaded) {
+                        console.error(`❌ CRITICAL: Face-API models failed to load after ${maxAttempts} attempts`);
+                        return null;
+                    }
+                }
+
+                if (typeof faceapi === 'undefined') {
+                    console.error('❌ CRITICAL: Face-API library not available');
+                    return null;
+                }
+
+                if (!faceapi.nets || !faceapi.nets.tinyFaceDetector) {
+                    console.error('❌ CRITICAL: Face-API networks not initialized');
+                    return null;
+                }
+
+                console.log('🔍 Detecting face with TinyFaceDetector...');
+                
+                const detections = await faceapi
+                    .detectAllFaces(canvas, new faceapi.TinyFaceDetectorOptions({ inputSize: 416 }))
+                    .withFaceLandmarks()
+                    .withFaceDescriptors();
+
+                console.log(`✅ Found ${detections.length} face(s)`);
+
+                if (detections.length === 0) {
+                    console.warn('❌ No face detected in image');
+                    return null;
+                }
+
+                const descriptor = detections[0].descriptor;
+                
+                // VALIDATION: Descriptor must be exactly 128D
+                if (!descriptor || descriptor.length !== 128) {
+                    console.error(`❌ CRITICAL: Invalid descriptor size ${descriptor?.length || 'null'}D - expected 128D`);
+                    return null;
+                }
+
+                console.log(`✅ Extracted valid 128D descriptor: [${Array.from(descriptor).slice(0, 5).map(v => v.toFixed(3)).join(', ')}...]`);
+                return descriptor;
+            } catch (error) {
+                console.error('❌ Error extracting facial descriptor:', error.message);
+                return null;
+            }
+        }
+
+        // ============= AUTHENTICATION FLOW =============
+        function switchToRegistration() {
+            document.getElementById('loginPage').classList.remove('active');
+            document.getElementById('registrationPage').classList.add('active');
+        }
+
+        function switchToLogin() {
+            document.getElementById('registrationPage').classList.remove('active');
+            document.getElementById('loginPage').classList.add('active');
+            resetLoginForm();
+        }
+
+        function resetLoginForm() {
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('emailPasswordForm').style.display = 'block';
+            document.getElementById('facialRecognitionForm').style.display = 'none';
+            facialData = null;
+            facialDescriptor = null;
+            document.getElementById('verifyFacialBtn').style.display = 'none';
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+        }
+
+        async function handleEmailPasswordLogin(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const message = document.getElementById('loginMessage');
+
+            if (!email || !password) {
+                message.textContent = '❌ Please enter email and password';
+                message.className = 'message error';
+                message.style.display = 'block';
+                return;
+            }
+
+            message.style.display = 'none';
+            document.getElementById('loginLoading').style.display = 'block';
+
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentUserId = data.user_id;
+                    message.textContent = '✅ Credentials verified! Now capture your face.';
+                    message.className = 'message success';
+                    message.style.display = 'block';
+
+                    // Move to facial recognition
+                    document.getElementById('emailPasswordForm').style.display = 'none';
+                    document.getElementById('facialRecognitionForm').style.display = 'block';
+                    document.getElementById('step1').style.display = 'none';
+
+                    // Start camera
+                    setTimeout(() => startCamera(), 500);
+                } else {
+                    message.textContent = `❌ ${data.message || 'Login failed'}`;
+                    message.className = 'message error';
+                    message.style.display = 'block';
+                }
+            } catch (error) {
+                message.textContent = `❌ Error: ${error.message}`;
+                message.className = 'message error';
+                message.style.display = 'block';
+            } finally {
+                document.getElementById('loginLoading').style.display = 'none';
+            }
+        }
+
+        async function startCamera() {
+            const faceStatus = document.getElementById('faceStatus');
+            try {
+                faceStatus.textContent = '⏳ Requesting camera access...';
+                faceStatus.className = 'face-detection-status loading';
+                
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+                });
+
+                document.getElementById('liveVideo').srcObject = stream;
+
+                faceStatus.textContent = '✅ Camera ready. Ensure good lighting and your entire face is visible.';
+                faceStatus.className = 'face-detection-status success';
+            } catch (error) {
+                faceStatus.textContent = `❌ Camera access denied: ${error.message}`;
+                faceStatus.className = 'face-detection-status error';
+                console.error('Camera error:', error);
+            }
+        }
+
+        async function captureFace() {
+            const faceStatus = document.getElementById('faceStatus');
+            const video = document.getElementById('liveVideo');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            if (!video.srcObject) {
+                faceStatus.textContent = '❌ Camera not initialized';
+                faceStatus.className = 'face-detection-status error';
+                return;
+            }
+
+            faceStatus.textContent = '⏳ Analyzing your face...';
+            faceStatus.className = 'face-detection-status loading';
+
+            try {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0);
+
+                console.log('Capturing face from canvas:', canvas.width, 'x', canvas.height);
+                
+                facialDescriptor = await extractFacialDescriptor(canvas);
+                
+                if (!facialDescriptor) {
+                    faceStatus.textContent = '❌ Face detection failed. Ensure good lighting, your entire face is in frame, and remove large accessories.';
+                    faceStatus.className = 'face-detection-status error';
+                    return;
+                }
+
+                facialData = canvas.toDataURL('image/jpeg');
+                document.getElementById('capturedImageDisplay').innerHTML = `<div class="captured-image"><img src="${facialData}"></div>`;
+                
+                faceStatus.textContent = `✅ Face captured successfully!`;
+                faceStatus.className = 'face-detection-status success';
+                
+                document.getElementById('verifyFacialBtn').style.display = 'block';
+                
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                    stream = null;
+                }
+            } catch (error) {
+                console.error('Error in captureFace:', error);
+                faceStatus.textContent = `❌ Error: ${error.message}`;
+                faceStatus.className = 'face-detection-status error';
+            }
+        }
+
+        async function handleFacialRecognition() {
+            const message = document.getElementById('loginMessage');
+
+            if (!facialData || !facialDescriptor) {
+                message.textContent = '❌ Please capture your face first';
+                message.className = 'message error';
+                message.style.display = 'block';
+                return;
+            }
+
+            document.getElementById('loginLoading').style.display = 'block';
+            message.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_URL}/verify-otp`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        user_id: currentUserId, 
+                        facial_descriptor: Array.from(facialDescriptor)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentUser = data.user;
+                    message.textContent = `✅ Facial recognition successful! (${(data.similarity * 100).toFixed(1)}% match)`;
+                    message.className = 'message success';
+                    message.style.display = 'block';
+
+                    setTimeout(() => {
+                        showDashboard();
+                    }, 1500);
+                } else {
+                    message.textContent = data.message || '❌ Facial recognition failed';
+                    message.className = 'message error';
+                    message.style.display = 'block';
+                }
+            } catch (error) {
+                message.textContent = `❌ Error: ${error.message}`;
+                message.className = 'message error';
+                message.style.display = 'block';
+            } finally {
+                document.getElementById('loginLoading').style.display = 'none';
+            }
+        }
+
+        function backToEmailPassword() {
+            document.getElementById('emailPasswordForm').style.display = 'block';
+            document.getElementById('facialRecognitionForm').style.display = 'none';
+            document.getElementById('step1').style.display = 'flex';
+            facialData = null;
+            facialDescriptor = null;
+            document.getElementById('verifyFacialBtn').style.display = 'none';
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+        }
+
+        // ============= REGISTRATION FLOW =============
+        function continueToFacialCapture(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('regName').value.trim();
+            const enrollmentId = document.getElementById('regEnrollmentId').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            const passwordConfirm = document.getElementById('regPasswordConfirm').value.trim();
+            const message = document.getElementById('registrationMessage');
+
+            if (!name || !enrollmentId || !email || !password) {
+                message.textContent = '❌ Please fill in all fields';
+                message.className = 'message error';
+                message.style.display = 'block';
+                return;
+            }
+
+            if (password !== passwordConfirm) {
+                message.textContent = '❌ Passwords do not match';
+                message.className = 'message error';
+                message.style.display = 'block';
+                return;
+            }
+
+            if (password.length < 6) {
+                message.textContent = '❌ Password must be at least 6 characters';
+                message.className = 'message error';
+                message.style.display = 'block';
+                return;
+            }
+
+            // Store registration data in session
+            sessionStorage.setItem('regName', name);
+            sessionStorage.setItem('regEnrollmentId', enrollmentId);
+            sessionStorage.setItem('regEmail', email);
+            sessionStorage.setItem('regPassword', password);
+
+            message.textContent = '✅ Account info saved! Now capture your face.';
+            message.className = 'message success';
+            message.style.display = 'block';
+
+            // Move to facial capture
+            document.getElementById('accountInfoForm').style.display = 'none';
+            document.getElementById('facialCaptureForm').style.display = 'block';
+
+            setTimeout(() => startRegistrationCamera(), 500);
+        }
+
+        async function startRegistrationCamera() {
+            const faceStatus = document.getElementById('regFaceStatus');
+            try {
+                faceStatus.textContent = '⏳ Requesting camera access...';
+                faceStatus.className = 'face-detection-status loading';
+                
+                registrationStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+                });
+
+                document.getElementById('registrationVideo').srcObject = registrationStream;
+
+                faceStatus.textContent = '✅ Camera ready. Position your face in the center with good lighting.';
+                faceStatus.className = 'face-detection-status success';
+            } catch (error) {
+                faceStatus.textContent = `❌ Camera access denied: ${error.message}`;
+                faceStatus.className = 'face-detection-status error';
+                console.error('Camera error:', error);
+            }
+        }
+
+        async function captureRegistrationFace() {
+            const faceStatus = document.getElementById('regFaceStatus');
+            const video = document.getElementById('registrationVideo');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            if (!video.srcObject) {
+                faceStatus.textContent = '❌ Camera not initialized';
+                faceStatus.className = 'face-detection-status error';
+                return;
+            }
+
+            faceStatus.textContent = '⏳ Analyzing your face...';
+            faceStatus.className = 'face-detection-status loading';
+
+            try {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0);
+
+                console.log('Capturing registration face from canvas:', canvas.width, 'x', canvas.height);
+                
+                registrationFacialDescriptor = await extractFacialDescriptor(canvas);
+                
+                if (!registrationFacialDescriptor) {
+                    faceStatus.textContent = '❌ Face detection failed. Ensure good lighting, your entire face is in frame, and remove large accessories.';
+                    faceStatus.className = 'face-detection-status error';
+                    return;
+                }
+
+                registrationFacialData = canvas.toDataURL('image/jpeg');
+                document.getElementById('regCapturedImageDisplay').innerHTML = `<div class="captured-image"><img src="${registrationFacialData}"></div>`;
+                
+                faceStatus.textContent = `✅ Face captured successfully!`;
+                faceStatus.className = 'face-detection-status success';
+                
+                document.getElementById('completeRegistrationBtn').style.display = 'block';
+                
+                if (registrationStream) {
+                    registrationStream.getTracks().forEach(track => track.stop());
+                    registrationStream = null;
+                }
+            } catch (error) {
+                console.error('Error in captureRegistrationFace:', error);
+                faceStatus.textContent = `❌ Error: ${error.message}`;
+                faceStatus.className = 'face-detection-status error';
+            }
+        }
+
+        async function handleRegistration() {
+            const message = document.getElementById('registrationMessage');
+
+            if (!registrationFacialDescriptor) {
+                message.textContent = '❌ Please capture your face first';
+                message.className = 'message error';
+                message.style.display = 'block';
+                return;
+            }
+
+            const name = sessionStorage.getItem('regName');
+            const enrollmentId = sessionStorage.getItem('regEnrollmentId');
+            const email = sessionStorage.getItem('regEmail');
+            const password = sessionStorage.getItem('regPassword');
+
+            document.getElementById('registrationLoading').style.display = 'block';
+            message.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_URL}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        enrollment_id: enrollmentId,
+                        email,
+                        password,
+                        facial_descriptor: Array.from(registrationFacialDescriptor)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    message.textContent = '✅ Registration successful! Redirecting to login...';
+                    message.className = 'message success';
+                    message.style.display = 'block';
+
+                    setTimeout(() => {
+                        sessionStorage.clear();
+                        registrationFacialDescriptor = null;
+                        registrationFacialData = null;
+                        document.getElementById('regName').value = '';
+                        document.getElementById('regEnrollmentId').value = '';
+                        document.getElementById('regEmail').value = '';
+                        document.getElementById('regPassword').value = '';
+                        document.getElementById('regPasswordConfirm').value = '';
+                        document.getElementById('accountInfoForm').style.display = 'block';
+                        document.getElementById('facialCaptureForm').style.display = 'none';
+                        document.getElementById('regCapturedImageDisplay').innerHTML = '';
+                        document.getElementById('completeRegistrationBtn').style.display = 'none';
+                        switchToLogin();
+                    }, 1500);
+                } else {
+                    message.textContent = `❌ ${data.message || 'Registration failed'}`;
+                    message.className = 'message error';
+                    message.style.display = 'block';
+                }
+            } catch (error) {
+                message.textContent = `❌ Error: ${error.message}`;
+                message.className = 'message error';
+                message.style.display = 'block';
+            } finally {
+                document.getElementById('registrationLoading').style.display = 'none';
+            }
+        }
+
+        function backToAccountInfo() {
+            document.getElementById('accountInfoForm').style.display = 'block';
+            document.getElementById('facialCaptureForm').style.display = 'none';
+            registrationFacialDescriptor = null;
+            registrationFacialData = null;
+            document.getElementById('regCapturedImageDisplay').innerHTML = '';
+            document.getElementById('completeRegistrationBtn').style.display = 'none';
+            if (registrationStream) {
+                registrationStream.getTracks().forEach(track => track.stop());
+                registrationStream = null;
+            }
+        }
+
+        // ============= DASHBOARD =============
+        function showDashboard() {
+            document.getElementById('loginPage').classList.remove('active');
+            document.getElementById('registrationPage').classList.remove('active');
+            document.getElementById('dashboardPage').classList.add('active');
+
+            // Populate dashboard
+            document.getElementById('userGreeting').textContent = `Welcome, ${currentUser.name}!`;
+            document.getElementById('dashName').textContent = currentUser.name;
+            document.getElementById('dashEmail').textContent = currentUser.email;
+            document.getElementById('dashEnrollmentId').textContent = currentUser.enrollment_id || 'N/A';
+
+            // Display user photo
+            displayUserPhoto();
+
+            // Load books data
+            loadBorrowedBooks();
+            loadAvailableBooks();
+        }
+
+        // Display user photo from database
+        function displayUserPhoto() {
+            const photoElement = document.getElementById('userPhotoDisplay');
+            const photoNameElement = document.getElementById('userPhotoName');
+            const photoEmailElement = document.getElementById('userPhotoEmail');
+
+            if (currentUser && currentUser.image) {
+                // Display the image from database
+                photoElement.src = currentUser.image;
+                photoElement.classList.remove('no-photo');
+                photoElement.style.background = 'white';
+            } else {
+                // Show placeholder emoji
+                photoElement.classList.add('no-photo');
+                photoElement.textContent = '👤';
+                photoElement.style.fontSize = '50px';
+                photoElement.src = '';
+            }
+
+            // Update user info below photo
+            photoNameElement.textContent = currentUser.name || 'User';
+            photoEmailElement.textContent = currentUser.email || 'Email not available';
+        }
+
+        function logout() {
+            currentUser = null;
+            currentUserId = null;
+            facialDescriptor = null;
+            facialData = null;
+            registrationFacialDescriptor = null;
+            registrationFacialData = null;
+
+            document.getElementById('dashboardPage').classList.remove('active');
+            document.getElementById('loginPage').classList.add('active');
+
+            resetLoginForm();
+        }
+
+        // ============= BOOK MANAGEMENT FUNCTIONS =============
+
+        // Switch between book tabs
+        function switchBookTab(tab) {
+            // Hide all tabs
+            document.getElementById('borrowedBooksTab').classList.remove('active');
+            document.getElementById('availableBookTab').classList.remove('active');
+            
+            // Remove active from buttons
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab
+            if (tab === 'borrowed') {
+                document.getElementById('borrowedBooksTab').classList.add('active');
+                document.querySelector('.tab-button:nth-child(1)').classList.add('active');
+                loadBorrowedBooks();
+            } else {
+                document.getElementById('availableBookTab').classList.add('active');
+                document.querySelector('.tab-button:nth-child(2)').classList.add('active');
+                loadAvailableBooks();
+            }
+        }
+
+        // Load available books for issuing
+        async function loadAvailableBooks() {
+            try {
+                const response = await fetch(`${API_URL}/books-available`);
+                const data = await response.json();
+                
+                const booksList = document.getElementById('availableBooksList');
+                
+                if (!data.success || !data.books || data.books.length === 0) {
+                    booksList.innerHTML = '<div class="no-books">No books available at the moment</div>';
+                    return;
+                }
+
+                booksList.innerHTML = data.books.map(book => `
+                    <div class="book-card">
+                        <div class="book-cover">
+                            ${book.cover_image_base64 ? 
+                                `<img src="${book.cover_image_base64}" alt="${book.title}">` :
+                                `<div style="font-size:40px; text-align: center; width: 100%;">📚</div>`
+                            }
+                        </div>
+                        <div class="book-info">
+                            <div class="book-title">${book.title}</div>
+                            <div class="book-author">${book.author}</div>
+                            <div class="book-availability">
+                                <span class="availability-badge">${book.available} available</span>
+                            </div>
+                            <button class="issue-btn" onclick="openIssueModal(${book.id}, '${book.title}', '${book.author}', '${book.barcode}', '${book.cover_image_base64}')">
+                                ➕ Issue
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading available books:', error);
+                document.getElementById('availableBooksList').innerHTML = `<div class="no-books">Error loading books</div>`;
+            }
+        }
+
+        // Load user's borrowed books
+        async function loadBorrowedBooks() {
+            try {
+                const response = await fetch(`${API_URL}/borrowed-books/${currentUserId}`);
+                const data = await response.json();
+                
+                const booksList = document.getElementById('borrowedBooksList');
+                
+                if (!data.success || !data.borrowed_books || data.borrowed_books.length === 0) {
+                    booksList.innerHTML = '<div class="no-books">No books borrowed yet.<br><small>Visit the library to explore!</small></div>';
+                    return;
+                }
+
+                booksList.innerHTML = data.borrowed_books.map(book => {
+                    const dueDate = new Date(book.due_date);
+                    const today = new Date();
+                    const daysLeft = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
+                    const isOverdue = daysLeft < 0;
+                    const isWarning = daysLeft < 3 && daysLeft >= 0;
+
+                    return `
+                        <div class="borrowed-book-item">
+                            <div class="borrowed-book-details">
+                                <h4>${book.title}</h4>
+                                <p>📝 ${book.author}</p>
+                                <p>🏷️ ${book.category}</p>
+                                <p>📛 ${book.book_barcode}</p>
+                            </div>
+                            <div class="borrowed-book-dates ${isOverdue ? 'alert' : (isWarning ? 'warning' : '')}">
+                                <div class="date-label">Due Date</div>
+                                <div class="date-value">${dueDate.toLocaleDateString()}</div>
+                                <div class="date-label" style="margin-top: 8px; color: ${isOverdue ? '#dc3545' : (isWarning ? '#ff9800' : '#666')};">
+                                    ${isOverdue ? '⚠️ OVERDUE' : (isWarning ? '⏰ ' + daysLeft + ' DAYS' : '✓ ' + daysLeft + ' DAYS')}
+                                </div>
+                            </div>
+                            <div class="borrowed-actions">
+                                <button class="btn-return" onclick="openReturnModal(${book.id}, '${book.title}', '${book.book_barcode}', '${book.cover_image_base64}', 'return')">
+                                    📥 Return
+                                </button>
+                                <button class="btn-return" style="background: #4caf50;" onclick="openReturnModal(${book.id}, '${book.title}', '${book.book_barcode}', '${book.cover_image_base64}', 'reissue')">
+                                    🔄 Reissue
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading borrowed books:', error);
+                document.getElementById('borrowedBooksList').innerHTML = `<div class="no-books">Error loading books</div>`;
+            }
+        }
+
+        // Open issue book modal
+        function openIssueModal(bookId, title, author, barcode, coverImage) {
+            selectedBookForIssue = { id: bookId, title, author, barcode, coverImage };
+            
+            document.getElementById('selectedBookInfo').innerHTML = `
+                <h4>${title}</h4>
+                <p>📝 ${author}</p>
+                <p>📛 Barcode: ${barcode}</p>
+                <p style="color: #999; font-size: 11px; margin-top: 10px;">Please capture the book's cover page and enter barcode to verify</p>
+            `;
+            
+            document.getElementById('issueBarcode').value = barcode;
+            document.getElementById('issuePhotoPreview').style.display = 'none';
+            document.getElementById('issueStatus').textContent = '';
+            document.getElementById('issueStatus').className = 'status-message';
+            
+            issuePhotoBase64 = null;
+            document.getElementById('issueBookModal').style.display = 'flex';
+        }
+
+        function closeIssueModal() {
+            document.getElementById('issueBookModal').style.display = 'none';
+            stopIssueCameraCapture();
+            selectedBookForIssue = null;
+            issuePhotoBase64 = null;
+        }
+
+        // Camera functions for issue book
+        async function startIssueCameraCapture() {
+            try {
+                if (issueStreamActive) return;
+                const video = document.getElementById('issueCameraFeed');
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
+                });
+                video.srcObject = stream;
+                issueStreamActive = true;
+                document.querySelector('.camera-controls button:nth-child(1)').style.display = 'none';
+                document.getElementById('captureIssueBtn').style.display = 'inline-block';
+                document.getElementById('stopIssueBtn').style.display = 'inline-block';
+            } catch (error) {
+                showIssueStatus('❌ Camera access denied', 'error');
+            }
+        }
+
+        function captureIssuePhoto() {
+            const video = document.getElementById('issueCameraFeed');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            issuePhotoBase64 = canvas.toDataURL('image/jpeg');
+            document.getElementById('issuePhotoPreview').src = issuePhotoBase64;
+            document.getElementById('issuePhotoPreview').style.display = 'block';
+            showIssueStatus('✅ Photo captured successfully', 'success');
+        }
+
+        function stopIssueCameraCapture() {
+            const video = document.getElementById('issueCameraFeed');
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            issueStreamActive = false;
+            document.querySelector('.camera-controls button:nth-child(1)').style.display = 'inline-block';
+            document.getElementById('captureIssueBtn').style.display = 'none';
+            document.getElementById('stopIssueBtn').style.display = 'none';
+        }
+
+        function showIssueStatus(message, type) {
+            const status = document.getElementById('issueStatus');
+            status.textContent = message;
+            status.className = `status-message ${type}`;
+        }
+
+        // Submit issue book
+        async function submitIssueBook() {
+            const barcode = document.getElementById('issueBarcode').value.trim();
+            
+            if (!barcode) {
+                showIssueStatus('❌ Please enter barcode', 'error');
+                return;
+            }
+
+            if (!issuePhotoBase64) {
+                showIssueStatus('❌ Please capture book cover photo', 'error');
+                return;
+            }
+
+            if (!selectedBookForIssue) {
+                showIssueStatus('❌ Book not selected', 'error');
+                return;
+            }
+
+            showIssueStatus('⏳ Processing...', 'info');
+
+            try {
+                const response = await fetch(`${API_URL}/issue-book`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: currentUserId,
+                        book_id: selectedBookForIssue.id,
+                        book_barcode: barcode,
+                        cover_image_base64: issuePhotoBase64
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showIssueStatus(`✅ ${data.message}\n📅 Issued: ${data.issued_date}\n📅 Due: ${data.due_date}`, 'success');
+                    setTimeout(() => {
+                        closeIssueModal();
+                        loadBorrowedBooks();
+                        loadAvailableBooks();
+                    }, 2000);
+                } else {
+                    showIssueStatus(`❌ ${data.message || 'Issue failed'}`, 'error');
+                }
+            } catch (error) {
+                showIssueStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Open return/reissue modal
+        function openReturnModal(borrowingId, title, barcode, coverImage, action) {
+            selectedBorrowingRecord = { id: borrowingId, title, barcode, coverImage };
+            
+            const isReissue = action === 'reissue';
+            document.getElementById('returnModalTitle').textContent = isReissue ? '🔄 Reissue Book' : '📥 Return Book';
+            
+            document.getElementById('returnBookInfo').innerHTML = `
+                <h4>${title}</h4>
+                <p>📛 Barcode: ${barcode}</p>
+                <p style="color: #999; font-size: 11px; margin-top: 10px;">
+                    ${isReissue ? 'Capture cover and confirm barcode to extend due date by 7 days' : 'Capture cover and confirm barcode to process return'}
+                </p>
+            `;
+            
+            document.getElementById('returnBarcode').value = barcode;
+            document.getElementById('returnPhotoPreview').style.display = 'none';
+            document.getElementById('returnStatus').textContent = '';
+            document.getElementById('returnStatus').className = 'status-message';
+            
+            returnPhotoBase64 = null;
+            
+            // Show/hide buttons based on action
+            document.querySelector('.modal-buttons button:nth-child(1)').style.display = isReissue ? 'none' : 'block';
+            document.querySelector('.modal-buttons button:nth-child(2)').style.display = isReissue ? 'block' : 'none';
+            
+            document.getElementById('returnBookModal').style.display = 'flex';
+        }
+
+        function closeReturnModal() {
+            document.getElementById('returnBookModal').style.display = 'none';
+            stopReturnCameraCapture();
+            selectedBorrowingRecord = null;
+            returnPhotoBase64 = null;
+        }
+
+        // Camera functions for return book
+        async function startReturnCameraCapture() {
+            try {
+                if (returnStreamActive) return;
+                const video = document.getElementById('returnCameraFeed');
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
+                });
+                video.srcObject = stream;
+                returnStreamActive = true;
+                document.querySelector('#returnCameraFeed').parentElement.querySelector('.camera-controls button:nth-child(1)').style.display = 'none';
+                document.getElementById('captureReturnBtn').style.display = 'inline-block';
+                document.getElementById('stopReturnBtn').style.display = 'inline-block';
+            } catch (error) {
+                showReturnStatus('❌ Camera access denied', 'error');
+            }
+        }
+
+        function captureReturnPhoto() {
+            const video = document.getElementById('returnCameraFeed');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            returnPhotoBase64 = canvas.toDataURL('image/jpeg');
+            document.getElementById('returnPhotoPreview').src = returnPhotoBase64;
+            document.getElementById('returnPhotoPreview').style.display = 'block';
+            showReturnStatus('✅ Photo captured successfully', 'success');
+        }
+
+        function stopReturnCameraCapture() {
+            const video = document.getElementById('returnCameraFeed');
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            returnStreamActive = false;
+            const cameras = document.querySelector('#returnCameraFeed');
+            if (cameras && cameras.parentElement) {
+                const btn = cameras.parentElement.querySelector('.camera-controls button:nth-child(1)');
+                if (btn) btn.style.display = 'inline-block';
+            }
+            document.getElementById('captureReturnBtn').style.display = 'none';
+            document.getElementById('stopReturnBtn').style.display = 'none';
+        }
+
+        function showReturnStatus(message, type) {
+            const status = document.getElementById('returnStatus');
+            status.textContent = message;
+            status.className = `status-message ${type}`;
+        }
+
+        // Submit return book
+        async function submitReturnBook() {
+            const barcode = document.getElementById('returnBarcode').value.trim();
+            
+            if (!barcode) {
+                showReturnStatus('❌ Please enter barcode', 'error');
+                return;
+            }
+
+            if (!returnPhotoBase64) {
+                showReturnStatus('❌ Please capture book cover photo', 'error');
+                return;
+            }
+
+            if (!selectedBorrowingRecord) {
+                showReturnStatus('❌ Book not selected', 'error');
+                return;
+            }
+
+            showReturnStatus('⏳ Processing return...', 'info');
+
+            try {
+                const response = await fetch(`${API_URL}/return-book-new`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        borrowing_id: selectedBorrowingRecord.id,
+                        book_barcode: barcode,
+                        return_cover_image_base64: returnPhotoBase64
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showReturnStatus(`✅ ${data.message}\n📅 Returned: ${data.return_date}`, 'success');
+                    setTimeout(() => {
+                        closeReturnModal();
+                        loadBorrowedBooks();
+                        loadAvailableBooks();
+                    }, 2000);
+                } else {
+                    showReturnStatus(`❌ ${data.message || 'Return failed'}`, 'error');
+                }
+            } catch (error) {
+                showReturnStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Submit reissue book
+        async function submitReissueBook() {
+            const barcode = document.getElementById('returnBarcode').value.trim();
+            
+            if (!barcode) {
+                showReturnStatus('❌ Please enter barcode', 'error');
+                return;
+            }
+
+            if (!returnPhotoBase64) {
+                showReturnStatus('❌ Please capture book cover photo', 'error');
+                return;
+            }
+
+            if (!selectedBorrowingRecord) {
+                showReturnStatus('❌ Book not selected', 'error');
+                return;
+            }
+
+            showReturnStatus('⏳ Processing reissue...', 'info');
+
+            try {
+                const response = await fetch(`${API_URL}/reissue-book`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        borrowing_id: selectedBorrowingRecord.id,
+                        book_barcode: barcode,
+                        reissue_cover_image_base64: returnPhotoBase64
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showReturnStatus(`✅ ${data.message}\n📅 New Due Date: ${data.new_due_date}`, 'success');
+                    setTimeout(() => {
+                        closeReturnModal();
+                        loadBorrowedBooks();
+                    }, 2000);
+                } else {
+                    showReturnStatus(`❌ ${data.message || 'Reissue failed'}`, 'error');
+                }
+            } catch (error) {
+                showReturnStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
