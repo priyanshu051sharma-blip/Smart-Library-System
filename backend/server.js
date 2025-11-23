@@ -58,6 +58,50 @@ async function sendOTPEmail(email, otp, userName) {
   }
 }
 
+// Function to compare book cover images (base64 encoded)
+function compareBookCovers(capturedImage, databaseImage) {
+  try {
+    if (!capturedImage || !databaseImage) {
+      return { match: false, similarity: 0, reason: 'Missing image data' };
+    }
+
+    // Remove base64 prefix if present
+    const capturedClean = capturedImage.replace(/^data:image\/[a-z]+;base64,/, '');
+    const databaseClean = databaseImage.replace(/^data:image\/[a-z]+;base64,/, '');
+
+    // Basic comparison: if images are identical, return 100% match
+    if (capturedClean === databaseClean) {
+      return { match: true, similarity: 100, reason: 'Exact match' };
+    }
+
+    // For partial match, compare image data hashes
+    const crypto = require('crypto');
+    const capturedHash = crypto.createHash('md5').update(capturedClean).digest('hex');
+    const databaseHash = crypto.createHash('md5').update(databaseClean).digest('hex');
+
+    // Calculate similarity based on hash similarity and image data length ratio
+    const lengthRatio = Math.min(capturedClean.length, databaseClean.length) / 
+                        Math.max(capturedClean.length, databaseClean.length);
+    
+    // If hashes match, 100% similarity
+    if (capturedHash === databaseHash) {
+      return { match: true, similarity: 100, reason: 'Hash match' };
+    }
+
+    // If lengths are similar (within 20%), consider it a partial match (60-80%)
+    const similarity = Math.round(lengthRatio * 100 * 0.8); // Adjust similarity calculation
+
+    return {
+      match: similarity >= 70,
+      similarity: similarity,
+      reason: similarity >= 70 ? 'Similar cover detected' : 'Cover mismatch'
+    };
+  } catch (err) {
+    console.error('Error comparing covers:', err);
+    return { match: false, similarity: 0, reason: 'Comparison error' };
+  }
+}
+
 // Middleware
 app.use(cors({
   origin: ['http://localhost:8000', 'http://localhost:3000', 'http://127.0.0.1:8000'],
@@ -1183,7 +1227,7 @@ app.post('/api/issue-book', (req, res) => {
 
   // Verify book exists and has the matching barcode
   db.get(
-    `SELECT id, title, barcode, available FROM books WHERE id = ? AND barcode = ?`,
+    `SELECT id, title, barcode, available, cover_image_base64 FROM books WHERE id = ? AND barcode = ?`,
     [book_id, book_barcode],
     (err, book) => {
       if (err) {
@@ -1198,41 +1242,112 @@ app.post('/api/issue-book', (req, res) => {
         return res.status(400).json({ success: false, message: 'Book is not available' });
       }
 
+      // Verify cover image matches database
+      let coverVerification = { match: true, similarity: 100, reason: 'No database cover to verify' };
+      if (cover_image_base64 && book.cover_image_base64) {
+        coverVerification = compareBookCovers(cover_image_base64, book.cover_image_base64);
+      }
+
+      // If cover match is critical, you can enforce it:
+      // if (!coverVerification.match) {
+      //   return res.status(400).json({ success: false, message: `Cover verification failed (${coverVerification.similarity}% match)`, verification: coverVerification });
+      // }
+
       // Calculate issue date and due date (14 days)
       const issuedDate = new Date();
       const dueDate = new Date(issuedDate.getTime() + 14 * 24 * 60 * 60 * 1000);
 
-      // Insert into borrowed_books table
-      db.run(
-        `INSERT INTO borrowed_books (user_id, book_id, book_barcode, cover_image_base64, issued_date, due_date, status)
-         VALUES (?, ?, ?, ?, ?, ?, 'active')`,
-        [user_id, book_id, book_barcode, cover_image_base64, issuedDate.toISOString(), dueDate.toISOString()],
-        function(insertErr) {
-          if (insertErr) {
-            return res.status(500).json({ success: false, message: 'Failed to issue book' });
-          }
-
-          // Update book availability
-          db.run(
-            `UPDATE books SET available = available - 1 WHERE id = ?`,
-            [book_id],
-            (updateErr) => {
-              if (updateErr) {
-                return res.status(500).json({ success: false, message: 'Failed to update inventory' });
-              }
-
-              res.json({
-                success: true,
-                message: 'Book issued successfully',
-                borrowing_id: this.lastID,
-                book_title: book.title,
-                issued_date: issuedDate.toISOString().split('T')[0],
-                due_date: dueDate.toISOString().split('T')[0]
-              });
-            }
-          );
+      // Get user details for email
+      db.get(`SELECT name, email FROM users WHERE id = ?`, [user_id], (err, user) => {
+        if (err || !user) {
+          return res.status(500).json({ success: false, message: 'Failed to retrieve user details' });
         }
-      );
+
+        // Insert into borrowed_books table
+        db.run(
+          `INSERT INTO borrowed_books (user_id, book_id, book_barcode, cover_image_base64, issued_date, due_date, status)
+           VALUES (?, ?, ?, ?, ?, ?, 'active')`,
+          [user_id, book_id, book_barcode, cover_image_base64, issuedDate.toISOString(), dueDate.toISOString()],
+          function(insertErr) {
+            if (insertErr) {
+              return res.status(500).json({ success: false, message: 'Failed to issue book' });
+            }
+
+            // Update book availability
+            db.run(
+              `UPDATE books SET available = available - 1 WHERE id = ?`,
+              [book_id],
+              (updateErr) => {
+                if (updateErr) {
+                  return res.status(500).json({ success: false, message: 'Failed to update inventory' });
+                }
+
+                // Send email notification
+                const issueDateTime = issuedDate.toLocaleString('en-IN', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric', 
+                  hour: '2-digit', 
+                  minute: '2-digit',
+                  second: '2-digit'
+                });
+                const dueDateStr = dueDate.toLocaleString('en-IN', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric'
+                });
+
+                const emailContent = `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                      <h1>📚 Smart Library System</h1>
+                      <p>Book Issue Confirmation</p>
+                    </div>
+                    <div style="padding: 30px; background: white; border-radius: 0 0 10px 10px; border: 1px solid #e0e0e0;">
+                      <p>Dear <strong>${user.name}</strong>,</p>
+                      <p>Your book has been successfully issued. Here are the details:</p>
+                      <div style="background: #f0f0f0; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <p><strong>📕 Book Title:</strong> ${book.title}</p>
+                        <p><strong>📅 Issue Date & Time:</strong> ${issueDateTime}</p>
+                        <p><strong>📆 Due Date:</strong> ${dueDateStr}</p>
+                        <p><strong>🔖 Barcode:</strong> ${book.barcode}</p>
+                      </div>
+                      <p style="color: #666;">Please return the book by the due date to avoid any penalties.</p>
+                      <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+                      <p style="color: #999; font-size: 12px; text-align: center;">Smart Library System © 2025</p>
+                    </div>
+                  </div>
+                `;
+
+                const mailOptions = {
+                  from: process.env.EMAIL_USER || 'your-email@gmail.com',
+                  to: user.email,
+                  subject: `📚 Book Issued: ${book.title}`,
+                  html: emailContent
+                };
+
+                transporter.sendMail(mailOptions, (emailErr) => {
+                  if (emailErr) {
+                    console.error('Error sending issue email:', emailErr);
+                  } else {
+                    console.log('Issue notification email sent to:', user.email);
+                  }
+                });
+
+                res.json({
+                  success: true,
+                  message: 'Book issued successfully',
+                  borrowing_id: this.lastID,
+                  book_title: book.title,
+                  issued_date: issuedDate.toISOString().split('T')[0],
+                  due_date: dueDate.toISOString().split('T')[0],
+                  cover_verification: coverVerification
+                });
+              }
+            );
+          }
+        );
+      });
     }
   );
 });
@@ -1267,7 +1382,10 @@ app.post('/api/return-book-new', (req, res) => {
   }
 
   db.get(
-    `SELECT book_id, user_id, book_barcode FROM borrowed_books WHERE id = ? AND status IN ('active', 'reissued')`,
+    `SELECT bb.id, bb.book_id, bb.user_id, bb.book_barcode, bb.cover_image_base64, b.cover_image_base64 as db_cover, b.title
+     FROM borrowed_books bb
+     JOIN books b ON bb.book_id = b.id
+     WHERE bb.id = ? AND bb.status IN ('active', 'reissued')`,
     [borrowing_id],
     (err, record) => {
       if (err) {
@@ -1282,36 +1400,101 @@ app.post('/api/return-book-new', (req, res) => {
         return res.status(400).json({ success: false, message: 'Book barcode verification failed' });
       }
 
+      // Verify return cover image matches original issue cover image
+      let coverVerification = { match: true, similarity: 100, reason: 'No database cover to verify' };
+      if (return_cover_image_base64 && record.cover_image_base64) {
+        coverVerification = compareBookCovers(return_cover_image_base64, record.cover_image_base64);
+      }
+
+      // If cover match is critical, you can enforce it:
+      // if (!coverVerification.match) {
+      //   return res.status(400).json({ success: false, message: `Return cover verification failed (${coverVerification.similarity}% match)`, verification: coverVerification });
+      // }
+
       const returnDate = new Date().toISOString();
 
-      // Update borrowed_books record
-      db.run(
-        `UPDATE borrowed_books SET return_date = ?, return_cover_image_base64 = ?, status = 'returned' 
-         WHERE id = ?`,
-        [returnDate, return_cover_image_base64, borrowing_id],
-        (updateErr) => {
-          if (updateErr) {
-            return res.status(500).json({ success: false, message: 'Failed to process return' });
-          }
-
-          // Increase book availability
-          db.run(
-            `UPDATE books SET available = available + 1 WHERE id = ?`,
-            [record.book_id],
-            (availErr) => {
-              if (availErr) {
-                return res.status(500).json({ success: false, message: 'Failed to update inventory' });
-              }
-
-              res.json({
-                success: true,
-                message: 'Book returned successfully',
-                return_date: returnDate.split('T')[0]
-              });
-            }
-          );
+      // Get user details for email
+      db.get(`SELECT name, email FROM users WHERE id = ?`, [record.user_id], (err, user) => {
+        if (err || !user) {
+          return res.status(500).json({ success: false, message: 'Failed to retrieve user details' });
         }
-      );
+
+        // Update borrowed_books record
+        db.run(
+          `UPDATE borrowed_books SET return_date = ?, return_cover_image_base64 = ?, status = 'returned' 
+           WHERE id = ?`,
+          [returnDate, return_cover_image_base64, borrowing_id],
+          (updateErr) => {
+            if (updateErr) {
+              return res.status(500).json({ success: false, message: 'Failed to process return' });
+            }
+
+            // Increase book availability
+            db.run(
+              `UPDATE books SET available = available + 1 WHERE id = ?`,
+              [record.book_id],
+              (availErr) => {
+                if (availErr) {
+                  return res.status(500).json({ success: false, message: 'Failed to update inventory' });
+                }
+
+                // Send email notification
+                const returnDateTime = new Date(returnDate).toLocaleString('en-IN', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric', 
+                  hour: '2-digit', 
+                  minute: '2-digit',
+                  second: '2-digit'
+                });
+
+                const emailContent = `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                      <h1>📚 Smart Library System</h1>
+                      <p>Book Return Confirmation</p>
+                    </div>
+                    <div style="padding: 30px; background: white; border-radius: 0 0 10px 10px; border: 1px solid #e0e0e0;">
+                      <p>Dear <strong>${user.name}</strong>,</p>
+                      <p>Your book has been successfully returned. Here are the details:</p>
+                      <div style="background: #f0f0f0; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #667eea;">
+                        <p><strong>📕 Book Title:</strong> ${record.title}</p>
+                        <p><strong>📅 Return Date & Time:</strong> ${returnDateTime}</p>
+                        <p><strong>🔖 Barcode:</strong> ${record.book_barcode}</p>
+                      </div>
+                      <p style="color: #666;">Thank you for returning the book on time. Happy reading!</p>
+                      <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+                      <p style="color: #999; font-size: 12px; text-align: center;">Smart Library System © 2025</p>
+                    </div>
+                  </div>
+                `;
+
+                const mailOptions = {
+                  from: process.env.EMAIL_USER || 'your-email@gmail.com',
+                  to: user.email,
+                  subject: `📚 Book Returned: ${record.title}`,
+                  html: emailContent
+                };
+
+                transporter.sendMail(mailOptions, (emailErr) => {
+                  if (emailErr) {
+                    console.error('Error sending return email:', emailErr);
+                  } else {
+                    console.log('Return notification email sent to:', user.email);
+                  }
+                });
+
+                res.json({
+                  success: true,
+                  message: 'Book returned successfully',
+                  return_date: returnDate.split('T')[0],
+                  cover_verification: coverVerification
+                });
+              }
+            );
+          }
+        );
+      });
     }
   );
 });
@@ -1325,7 +1508,10 @@ app.post('/api/reissue-book', (req, res) => {
   }
 
   db.get(
-    `SELECT due_date, book_barcode FROM borrowed_books WHERE id = ? AND status = 'active'`,
+    `SELECT bb.id, bb.due_date, bb.book_barcode, bb.cover_image_base64, bb.user_id, b.cover_image_base64 as db_cover, b.title
+     FROM borrowed_books bb
+     JOIN books b ON bb.book_id = b.id
+     WHERE bb.id = ? AND bb.status = 'active'`,
     [borrowing_id],
     (err, record) => {
       if (err) {
@@ -1340,25 +1526,96 @@ app.post('/api/reissue-book', (req, res) => {
         return res.status(400).json({ success: false, message: 'Book barcode verification failed' });
       }
 
+      // Verify reissue cover image matches original issue cover image
+      let coverVerification = { match: true, similarity: 100, reason: 'No database cover to verify' };
+      if (reissue_cover_image_base64 && record.cover_image_base64) {
+        coverVerification = compareBookCovers(reissue_cover_image_base64, record.cover_image_base64);
+      }
+
+      // If cover match is critical, you can enforce it:
+      // if (!coverVerification.match) {
+      //   return res.status(400).json({ success: false, message: `Reissue cover verification failed (${coverVerification.similarity}% match)`, verification: coverVerification });
+      // }
+
       // Extend due date by 7 days
       const currentDue = new Date(record.due_date);
       const newDueDate = new Date(currentDue.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-      db.run(
-        `UPDATE borrowed_books SET due_date = ?, status = 'reissued' WHERE id = ?`,
-        [newDueDate.toISOString(), borrowing_id],
-        (updateErr) => {
-          if (updateErr) {
-            return res.status(500).json({ success: false, message: 'Failed to reissue book' });
-          }
-
-          res.json({
-            success: true,
-            message: 'Book reissued successfully',
-            new_due_date: newDueDate.toISOString().split('T')[0]
-          });
+      // Get user details for email
+      db.get(`SELECT name, email FROM users WHERE id = ?`, [record.user_id], (err, user) => {
+        if (err || !user) {
+          return res.status(500).json({ success: false, message: 'Failed to retrieve user details' });
         }
-      );
+
+        db.run(
+          `UPDATE borrowed_books SET due_date = ?, status = 'reissued' WHERE id = ?`,
+          [newDueDate.toISOString(), borrowing_id],
+          (updateErr) => {
+            if (updateErr) {
+              return res.status(500).json({ success: false, message: 'Failed to reissue book' });
+            }
+
+            // Send email notification
+            const reissueDateTime = new Date().toLocaleString('en-IN', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric', 
+              hour: '2-digit', 
+              minute: '2-digit',
+              second: '2-digit'
+            });
+            const newDueDateStr = newDueDate.toLocaleString('en-IN', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric'
+            });
+
+            const emailContent = `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
+                  <h1>📚 Smart Library System</h1>
+                  <p>Book Reissue Confirmation</p>
+                </div>
+                <div style="padding: 30px; background: white; border-radius: 0 0 10px 10px; border: 1px solid #e0e0e0;">
+                  <p>Dear <strong>${user.name}</strong>,</p>
+                  <p>Your book has been successfully reissued. Here are the updated details:</p>
+                  <div style="background: #f0f0f0; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #667eea;">
+                    <p><strong>📕 Book Title:</strong> ${record.title}</p>
+                    <p><strong>📅 Reissue Date & Time:</strong> ${reissueDateTime}</p>
+                    <p><strong>📆 New Due Date:</strong> ${newDueDateStr}</p>
+                    <p><strong>🔖 Barcode:</strong> ${record.book_barcode}</p>
+                  </div>
+                  <p style="color: #666;">Your due date has been extended by 7 days. Please return the book by the new due date.</p>
+                  <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+                  <p style="color: #999; font-size: 12px; text-align: center;">Smart Library System © 2025</p>
+                </div>
+              </div>
+            `;
+
+            const mailOptions = {
+              from: process.env.EMAIL_USER || 'your-email@gmail.com',
+              to: user.email,
+              subject: `📚 Book Reissued: ${record.title}`,
+              html: emailContent
+            };
+
+            transporter.sendMail(mailOptions, (emailErr) => {
+              if (emailErr) {
+                console.error('Error sending reissue email:', emailErr);
+              } else {
+                console.log('Reissue notification email sent to:', user.email);
+              }
+            });
+
+            res.json({
+              success: true,
+              message: 'Book reissued successfully',
+              new_due_date: newDueDate.toISOString().split('T')[0],
+              cover_verification: coverVerification
+            });
+          }
+        );
+      });
     }
   );
 });

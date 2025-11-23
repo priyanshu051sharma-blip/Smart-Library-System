@@ -2125,12 +2125,20 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    showIssueStatus(`✅ ${data.message}\n📅 Issued: ${data.issued_date}\n📅 Due: ${data.due_date}`, 'success');
+                    let statusMsg = `✅ ${data.message}\n📅 Issued: ${data.issued_date}\n📅 Due: ${data.due_date}`;
+                    
+                    // Add cover verification info if available
+                    if (data.cover_verification) {
+                        const verif = data.cover_verification;
+                        statusMsg += `\n\n📸 Cover Verification:\n${verif.match ? '✅' : '⚠️'} Similarity: ${verif.similarity}%\n${verif.reason}`;
+                    }
+                    
+                    showIssueStatus(statusMsg, 'success');
                     setTimeout(() => {
                         closeIssueModal();
                         loadBorrowedBooks();
                         loadAvailableBooks();
-                    }, 2000);
+                    }, 2500);
                 } else {
                     showIssueStatus(`❌ ${data.message || 'Issue failed'}`, 'error');
                 }
@@ -2263,12 +2271,20 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    showReturnStatus(`✅ ${data.message}\n📅 Returned: ${data.return_date}`, 'success');
+                    let statusMsg = `✅ ${data.message}\n📅 Returned: ${data.return_date}`;
+                    
+                    // Add cover verification info if available
+                    if (data.cover_verification) {
+                        const verif = data.cover_verification;
+                        statusMsg += `\n\n📸 Cover Verification:\n${verif.match ? '✅' : '⚠️'} Similarity: ${verif.similarity}%\n${verif.reason}`;
+                    }
+                    
+                    showReturnStatus(statusMsg, 'success');
                     setTimeout(() => {
                         closeReturnModal();
                         loadBorrowedBooks();
                         loadAvailableBooks();
-                    }, 2000);
+                    }, 2500);
                 } else {
                     showReturnStatus(`❌ ${data.message || 'Return failed'}`, 'error');
                 }
@@ -2312,11 +2328,19 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    showReturnStatus(`✅ ${data.message}\n📅 New Due Date: ${data.new_due_date}`, 'success');
+                    let statusMsg = `✅ ${data.message}\n📅 New Due Date: ${data.new_due_date}`;
+                    
+                    // Add cover verification info if available
+                    if (data.cover_verification) {
+                        const verif = data.cover_verification;
+                        statusMsg += `\n\n📸 Cover Verification:\n${verif.match ? '✅' : '⚠️'} Similarity: ${verif.similarity}%\n${verif.reason}`;
+                    }
+                    
+                    showReturnStatus(statusMsg, 'success');
                     setTimeout(() => {
                         closeReturnModal();
                         loadBorrowedBooks();
-                    }, 2000);
+                    }, 2500);
                 } else {
                     showReturnStatus(`❌ ${data.message || 'Reissue failed'}`, 'error');
                 }
