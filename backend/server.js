@@ -80,9 +80,9 @@ function compareBookCovers(capturedImage, databaseImage) {
     const databaseHash = crypto.createHash('md5').update(databaseClean).digest('hex');
 
     // Calculate similarity based on hash similarity and image data length ratio
-    const lengthRatio = Math.min(capturedClean.length, databaseClean.length) / 
-                        Math.max(capturedClean.length, databaseClean.length);
-    
+    const lengthRatio = Math.min(capturedClean.length, databaseClean.length) /
+      Math.max(capturedClean.length, databaseClean.length);
+
     // If hashes match, 100% similarity
     if (capturedHash === databaseHash) {
       return { match: true, similarity: 100, reason: 'Hash match' };
@@ -295,11 +295,11 @@ function insertSampleData() {
   sampleUsers.forEach((user, index) => {
     // Hash password
     const hashedPassword = bcrypt.hashSync(user.password, 10);
-    
+
     db.run(
       `INSERT OR IGNORE INTO users (enrollment_id, name, email, phone, password, barcode_id) VALUES (?, ?, ?, ?, ?, ?)`,
       [user.enrollment_id, user.name, user.email, user.phone, hashedPassword, 'BOOK' + user.enrollment_id],
-      function(err) {
+      function (err) {
         if (err && err.code !== 'SQLITE_CONSTRAINT') {
           console.error('Error inserting user:', err);
         }
@@ -309,103 +309,103 @@ function insertSampleData() {
 
   // Insert sample books with random cover images
   const sampleBooks = [
-    { 
-      title: 'The Great Gatsby', 
-      author: 'F. Scott Fitzgerald', 
-      isbn: 'ISBN001', 
-      barcode: 'BAR001001', 
-      quantity: 5, 
-      available: 5, 
+    {
+      title: 'The Great Gatsby',
+      author: 'F. Scott Fitzgerald',
+      isbn: 'ISBN001',
+      barcode: 'BAR001001',
+      quantity: 5,
+      available: 5,
       category: 'Fiction',
       color: '#FFB6C1'
     },
-    { 
-      title: 'To Kill a Mockingbird', 
-      author: 'Harper Lee', 
-      isbn: 'ISBN002', 
-      barcode: 'BAR001002', 
-      quantity: 3, 
-      available: 2, 
+    {
+      title: 'To Kill a Mockingbird',
+      author: 'Harper Lee',
+      isbn: 'ISBN002',
+      barcode: 'BAR001002',
+      quantity: 3,
+      available: 2,
       category: 'Fiction',
       color: '#87CEEB'
     },
-    { 
-      title: 'Introduction to Algorithms', 
-      author: 'Cormen & Leiserson', 
-      isbn: 'ISBN003', 
-      barcode: 'BAR001003', 
-      quantity: 4, 
-      available: 3, 
+    {
+      title: 'Introduction to Algorithms',
+      author: 'Cormen & Leiserson',
+      isbn: 'ISBN003',
+      barcode: 'BAR001003',
+      quantity: 4,
+      available: 3,
       category: 'Technical',
       color: '#90EE90'
     },
-    { 
-      title: 'Clean Code', 
-      author: 'Robert C. Martin', 
-      isbn: 'ISBN004', 
-      barcode: 'BAR001004', 
-      quantity: 2, 
-      available: 1, 
+    {
+      title: 'Clean Code',
+      author: 'Robert C. Martin',
+      isbn: 'ISBN004',
+      barcode: 'BAR001004',
+      quantity: 2,
+      available: 1,
       category: 'Technical',
       color: '#FFD700'
     },
-    { 
-      title: '1984', 
-      author: 'George Orwell', 
-      isbn: 'ISBN005', 
-      barcode: 'BAR001005', 
-      quantity: 4, 
-      available: 4, 
+    {
+      title: '1984',
+      author: 'George Orwell',
+      isbn: 'ISBN005',
+      barcode: 'BAR001005',
+      quantity: 4,
+      available: 4,
       category: 'Fiction',
       color: '#D3D3D3'
     },
-    { 
-      title: 'Atomic Habits', 
-      author: 'James Clear', 
-      isbn: 'ISBN006', 
-      barcode: 'BAR001006', 
-      quantity: 3, 
-      available: 3, 
+    {
+      title: 'Atomic Habits',
+      author: 'James Clear',
+      isbn: 'ISBN006',
+      barcode: 'BAR001006',
+      quantity: 3,
+      available: 3,
       category: 'Self-Help',
       color: '#FFA500'
     },
-    { 
-      title: 'The Catcher in the Rye', 
-      author: 'J.D. Salinger', 
-      isbn: 'ISBN007', 
-      barcode: 'BAR001007', 
-      quantity: 2, 
-      available: 2, 
+    {
+      title: 'The Catcher in the Rye',
+      author: 'J.D. Salinger',
+      isbn: 'ISBN007',
+      barcode: 'BAR001007',
+      quantity: 2,
+      available: 2,
       category: 'Fiction',
       color: '#DDA0DD'
     },
-    { 
-      title: 'Design Patterns', 
-      author: 'Gang of Four', 
-      isbn: 'ISBN008', 
-      barcode: 'BAR001008', 
-      quantity: 3, 
-      available: 2, 
+    {
+      title: 'Design Patterns',
+      author: 'Gang of Four',
+      isbn: 'ISBN008',
+      barcode: 'BAR001008',
+      quantity: 3,
+      available: 2,
       category: 'Technical',
       color: '#00CED1'
     },
-    { 
-      title: 'The Hobbit', 
-      author: 'J.R.R. Tolkien', 
-      isbn: 'ISBN009', 
-      barcode: 'BAR001009', 
-      quantity: 4, 
-      available: 4, 
+    {
+      title: 'The Hobbit',
+      author: 'J.R.R. Tolkien',
+      isbn: 'ISBN009',
+      barcode: 'BAR001009',
+      quantity: 4,
+      available: 4,
       category: 'Fantasy',
       color: '#F08080'
     },
-    { 
-      title: 'Python Crash Course', 
-      author: 'Eric Matthes', 
-      isbn: 'ISBN010', 
-      barcode: 'BAR001010', 
-      quantity: 2, 
-      available: 2, 
+    {
+      title: 'Python Crash Course',
+      author: 'Eric Matthes',
+      isbn: 'ISBN010',
+      barcode: 'BAR001010',
+      quantity: 2,
+      available: 2,
       category: 'Technical',
       color: '#20B2AA'
     }
@@ -533,7 +533,7 @@ app.post('/api/register', (req, res) => {
         `INSERT INTO users (name, email, password, enrollment_id, facial_data, image) 
          VALUES (?, ?, ?, ?, ?, ?)`,
         [name, email, hashedPassword, enrollment_id || null, JSON.stringify(facialDataJSON), image ? Buffer.from(image, 'base64') : null],
-        function(insertErr) {
+        function (insertErr) {
           if (insertErr) {
             return res.status(500).json({ error: 'Registration failed', details: insertErr.message });
           }
@@ -622,12 +622,12 @@ app.post('/api/verify-otp', (req, res) => {
 
         // Calculate Euclidean distance between descriptors
         const similarity = calculateDescriptorSimilarity(storedDescriptor, facial_descriptor);
-        
+
         console.log(`🔍 Facial verification - User: ${row.name}`);
         console.log(`   Similarity: ${(similarity * 100).toFixed(2)}% (Threshold: 70%)`);
         console.log(`   Stored: [${Array.from(storedDescriptor).slice(0, 3).map(v => v.toFixed(3)).join(', ')}...]`);
         console.log(`   Captured: [${Array.from(facial_descriptor).slice(0, 3).map(v => v.toFixed(3)).join(', ')}...]`);
-        
+
         // STRICT: Only accept if similarity > 70% (higher threshold due to proper normalization)
         const THRESHOLD = 0.7;
         const matched = similarity > THRESHOLD;
@@ -635,8 +635,8 @@ app.post('/api/verify-otp', (req, res) => {
         if (!matched) {
           console.log(`❌ REJECTED - Similarity ${(similarity * 100).toFixed(2)}% < 70% threshold`);
           console.log(`🔐 ======== END FACIAL VERIFICATION (FAILED) ========\n`);
-          return res.status(401).json({ 
-            success: false, 
+          return res.status(401).json({
+            success: false,
             message: `Facial recognition failed. Similarity: ${(similarity * 100).toFixed(1)}% (requires 70%+). This is a different face.`,
             similarity: similarity
           });
@@ -663,9 +663,9 @@ app.post('/api/verify-otp', (req, res) => {
       } catch (parseErr) {
         console.error('Facial verification error:', parseErr.message);
         console.log(`🔐 ======== END FACIAL VERIFICATION (ERROR) ========\n`);
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Facial data verification error: ' + parseErr.message 
+        return res.status(400).json({
+          success: false,
+          message: 'Facial data verification error: ' + parseErr.message
         });
       }
     }
@@ -715,8 +715,8 @@ app.post('/api/upload-image', upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     filename: req.file.filename,
     path: `/uploads/${req.file.filename}`
   });
@@ -815,7 +815,7 @@ app.post('/api/verify-facial', (req, res) => {
       // Simple similarity check (in production, use proper ML model)
       const storedData = JSON.parse(row.facial_data);
       const newData = JSON.parse(facial_data);
-      
+
       const similarity = calculateSimilarity(storedData, newData);
       const matched = similarity > 0.7; // 70% threshold
 
@@ -852,7 +852,7 @@ function calculateDescriptorSimilarity(descriptor1, descriptor2) {
 
   // Euclidean distance for 128D vectors
   const euclideanDistance = Math.sqrt(sumSquaredDifferences);
-  
+
   // PROPER FORMULA for Face-API descriptors:
   // Face-API outputs 128D unit-normalized vectors (L2 norm = 1)
   // For unit vectors, max distance is sqrt(2) ≈ 1.414
@@ -864,228 +864,24 @@ function calculateDescriptorSimilarity(descriptor1, descriptor2) {
   // - Different person: distance ≈ 1.0+, similarity < 30%
   const MAX_DISTANCE = Math.sqrt(2); // Maximum distance for unit vectors
   const similarity = Math.max(0, Math.min(1, 1 - (euclideanDistance / MAX_DISTANCE)));
-  
+
   return similarity;
 }
 
 // Helper function to calculate facial data similarity (deprecated - kept for reference)
 function calculateSimilarity(data1, data2) {
   if (!data1 || !data2) return 0;
-  
+
   // Extract descriptors if available
   const desc1 = data1.descriptor || data1;
   const desc2 = data2.descriptor || data2;
-  
+
   if (!Array.isArray(desc1) || !Array.isArray(desc2)) {
     return 0;
   }
-  
+
   return calculateDescriptorSimilarity(desc1, desc2);
 }
-
-// Borrow a book with barcode and cover page scanning
-app.post('/api/borrow-with-scan', (req, res) => {
-  const { user_id, book_id, barcode, cover_image } = req.body;
-
-  if (!user_id || !book_id || !barcode) {
-    return res.status(400).json({ error: 'User ID, Book ID, and barcode are required' });
-  }
-
-  // Check if book is available
-  db.get(`SELECT available FROM books WHERE id = ?`, [book_id], (err, book) => {
-    if (err) {
-      return res.status(500).json({ error: 'Database error' });
-    }
-
-    if (!book || book.available <= 0) {
-      return res.status(400).json({ error: 'Book not available' });
-    }
-
-    // Calculate due date (14 days from now)
-    const dueDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-
-    // Create borrowing record with barcode and cover image
-    db.run(
-      `INSERT INTO borrowing (user_id, book_id, book_barcode, cover_image, due_date, status) VALUES (?, ?, ?, ?, ?, 'active')`,
-      [user_id, book_id, barcode, cover_image, dueDate.toISOString()],
-      function(err) {
-        if (err) {
-          return res.status(500).json({ error: 'Failed to borrow book' });
-        }
-
-        // Decrease available count
-        db.run(
-          `UPDATE books SET available = available - 1 WHERE id = ?`,
-          [book_id],
-          (updateErr) => {
-            if (updateErr) {
-              return res.status(500).json({ error: 'Failed to update inventory' });
-            }
-
-            res.json({
-              success: true,
-              message: 'Book borrowed successfully with barcode scan',
-              due_date: dueDate.toISOString()
-            });
-          }
-        );
-      }
-    );
-  });
-});
-
-// Return a book with cover page scanning
-app.post('/api/return-book-with-scan', (req, res) => {
-  const { borrowing_id, return_cover_image } = req.body;
-
-  if (!borrowing_id) {
-    return res.status(400).json({ error: 'Borrowing ID is required' });
-  }
-
-  // Get borrowing record to find book_id
-  db.get(
-    `SELECT book_id FROM borrowing WHERE id = ?`,
-    [borrowing_id],
-    (err, record) => {
-      if (err) {
-        return res.status(500).json({ error: 'Database error' });
-      }
-
-      if (!record) {
-        return res.status(404).json({ error: 'Borrowing record not found' });
-      }
-
-      // Update borrowing record with return cover image
-      db.run(
-        `UPDATE borrowing SET return_date = CURRENT_TIMESTAMP, return_cover_image = ?, status = 'returned' WHERE id = ?`,
-        [return_cover_image, borrowing_id],
-        (updateErr) => {
-          if (updateErr) {
-            return res.status(500).json({ error: 'Failed to return book' });
-          }
-
-          // Increase available count
-          db.run(
-            `UPDATE books SET available = available + 1 WHERE id = ?`,
-            [record.book_id],
-            (inventoryErr) => {
-              if (inventoryErr) {
-                return res.status(500).json({ error: 'Failed to update inventory' });
-              }
-
-              res.json({
-                success: true,
-                message: 'Book returned successfully with cover scan'
-              });
-            }
-          );
-        }
-      );
-    }
-  );
-});
-
-// Borrow a book
-app.post('/api/borrow', (req, res) => {
-  const { user_id, book_id } = req.body;
-
-  if (!user_id || !book_id) {
-    return res.status(400).json({ error: 'User ID and Book ID are required' });
-  }
-
-  // Check if book is available
-  db.get(`SELECT available FROM books WHERE id = ?`, [book_id], (err, book) => {
-    if (err) {
-      return res.status(500).json({ error: 'Database error' });
-    }
-
-    if (!book || book.available <= 0) {
-      return res.status(400).json({ error: 'Book not available' });
-    }
-
-    // Calculate due date (14 days from now)
-    const dueDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-
-    // Create borrowing record
-    db.run(
-      `INSERT INTO borrowing (user_id, book_id, due_date, status) VALUES (?, ?, ?, 'active')`,
-      [user_id, book_id, dueDate.toISOString()],
-      function(err) {
-        if (err) {
-          return res.status(500).json({ error: 'Failed to borrow book' });
-        }
-
-        // Decrease available count
-        db.run(
-          `UPDATE books SET available = available - 1 WHERE id = ?`,
-          [book_id],
-          (updateErr) => {
-            if (updateErr) {
-              return res.status(500).json({ error: 'Failed to update inventory' });
-            }
-
-            res.json({
-              success: true,
-              message: 'Book borrowed successfully',
-              due_date: dueDate.toISOString()
-            });
-          }
-        );
-      }
-    );
-  });
-});
-
-// Return a book
-app.post('/api/return-book', (req, res) => {
-  const { borrowing_id } = req.body;
-
-  if (!borrowing_id) {
-    return res.status(400).json({ error: 'Borrowing ID is required' });
-  }
-
-  // Get borrowing record to find book_id
-  db.get(
-    `SELECT book_id FROM borrowing WHERE id = ?`,
-    [borrowing_id],
-    (err, record) => {
-      if (err) {
-        return res.status(500).json({ error: 'Database error' });
-      }
-
-      if (!record) {
-        return res.status(404).json({ error: 'Borrowing record not found' });
-      }
-
-      // Update borrowing record
-      db.run(
-        `UPDATE borrowing SET return_date = CURRENT_TIMESTAMP, status = 'returned' WHERE id = ?`,
-        [borrowing_id],
-        (updateErr) => {
-          if (updateErr) {
-            return res.status(500).json({ error: 'Failed to return book' });
-          }
-
-          // Increase available count
-          db.run(
-            `UPDATE books SET available = available + 1 WHERE id = ?`,
-            [record.book_id],
-            (inventoryErr) => {
-              if (inventoryErr) {
-                return res.status(500).json({ error: 'Failed to update inventory' });
-              }
-
-              res.json({
-                success: true,
-                message: 'Book returned successfully'
-              });
-            }
-          );
-        }
-      );
-    }
-  );
-});
 
 // Admin endpoint to add Priyanshu's account (temporary setup endpoint)
 app.post('/api/admin/add-priyanshu', (req, res) => {
@@ -1093,7 +889,7 @@ app.post('/api/admin/add-priyanshu', (req, res) => {
   const email = 'priyanshu.sharma24@st.niituniversity.in';
   const password = bcrypt.hashSync('priyanshu123', 10);
   const enrollment_id = null;
-  
+
   // Check if user already exists
   db.get(`SELECT id FROM users WHERE email = ?`, [email], (err, row) => {
     if (err) {
@@ -1117,7 +913,7 @@ app.post('/api/admin/add-priyanshu', (req, res) => {
       `INSERT INTO users (name, email, password, enrollment_id, facial_data) 
        VALUES (?, ?, ?, ?, ?)`,
       [name, email, password, enrollment_id, defaultFacialData],
-      function(insertErr) {
+      function (insertErr) {
         if (insertErr) {
           return res.status(500).json({ error: 'Failed to create user' });
         }
@@ -1157,7 +953,7 @@ app.post('/api/update-user-facial', (req, res) => {
     db.run(
       `UPDATE users SET facial_data = ? WHERE email = ?`,
       [facialData, email],
-      function(err) {
+      function (err) {
         if (err) {
           console.error('Database error:', err);
           return res.status(500).json({ success: false, message: 'Database error' });
@@ -1168,8 +964,8 @@ app.post('/api/update-user-facial', (req, res) => {
         }
 
         console.log(`✅ Facial descriptor updated for ${email}`);
-        res.json({ 
-          success: true, 
+        res.json({
+          success: true,
           message: `Facial descriptor updated successfully for ${email}`,
           descriptor_length: facial_descriptor.length,
           descriptor_sample: facial_descriptor.slice(0, 5)
@@ -1201,7 +997,7 @@ app.get('/api/books-available', (req, res) => {
 // Get book by barcode (for verification during issue/return)
 app.get('/api/book-by-barcode/:barcode', (req, res) => {
   const { barcode } = req.params;
-  
+
   db.get(
     `SELECT id, title, author, isbn, barcode, category, available, cover_image_base64 FROM books WHERE barcode = ?`,
     [barcode],
@@ -1220,7 +1016,7 @@ app.get('/api/book-by-barcode/:barcode', (req, res) => {
 // Issue a book to user (with barcode and cover page verification)
 app.post('/api/issue-book', (req, res) => {
   const { user_id, book_id, book_barcode, cover_image_base64 } = req.body;
-  
+
   if (!user_id || !book_id || !book_barcode) {
     return res.status(400).json({ success: false, message: 'User ID, Book ID, and barcode required' });
   }
@@ -1233,7 +1029,7 @@ app.post('/api/issue-book', (req, res) => {
       if (err) {
         return res.status(500).json({ success: false, message: 'Database error' });
       }
-      
+
       if (!book) {
         return res.status(400).json({ success: false, message: 'Book barcode verification failed' });
       }
@@ -1247,11 +1043,6 @@ app.post('/api/issue-book', (req, res) => {
       if (cover_image_base64 && book.cover_image_base64) {
         coverVerification = compareBookCovers(cover_image_base64, book.cover_image_base64);
       }
-
-      // If cover match is critical, you can enforce it:
-      // if (!coverVerification.match) {
-      //   return res.status(400).json({ success: false, message: `Cover verification failed (${coverVerification.similarity}% match)`, verification: coverVerification });
-      // }
 
       // Calculate issue date and due date (14 days)
       const issuedDate = new Date();
@@ -1268,7 +1059,7 @@ app.post('/api/issue-book', (req, res) => {
           `INSERT INTO borrowed_books (user_id, book_id, book_barcode, cover_image_base64, issued_date, due_date, status)
            VALUES (?, ?, ?, ?, ?, ?, 'active')`,
           [user_id, book_id, book_barcode, cover_image_base64, issuedDate.toISOString(), dueDate.toISOString()],
-          function(insertErr) {
+          function (insertErr) {
             if (insertErr) {
               return res.status(500).json({ success: false, message: 'Failed to issue book' });
             }
@@ -1283,17 +1074,18 @@ app.post('/api/issue-book', (req, res) => {
                 }
 
                 // Send email notification
-                const issueDateTime = issuedDate.toLocaleString('en-IN', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric', 
-                  hour: '2-digit', 
+                console.log(`📧 Preparing to send issue email to user ID: ${user_id}`);
+                const issueDateTime = issuedDate.toLocaleString('en-IN', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
                   minute: '2-digit',
                   second: '2-digit'
                 });
-                const dueDateStr = dueDate.toLocaleString('en-IN', { 
-                  year: 'numeric', 
-                  month: 'long', 
+                const dueDateStr = dueDate.toLocaleString('en-IN', {
+                  year: 'numeric',
+                  month: 'long',
                   day: 'numeric'
                 });
 
@@ -1319,20 +1111,25 @@ app.post('/api/issue-book', (req, res) => {
                   </div>
                 `;
 
-                const mailOptions = {
-                  from: process.env.EMAIL_USER || 'your-email@gmail.com',
-                  to: user.email,
-                  subject: `📚 Book Issued: ${book.title}`,
-                  html: emailContent
-                };
+                if (user.email) {
+                  console.log(`📧 Found user email: ${user.email}. Sending...`);
+                  const mailOptions = {
+                    from: process.env.EMAIL_USER || 'your-email@gmail.com',
+                    to: user.email,
+                    subject: `📚 Book Issued: ${book.title}`,
+                    html: emailContent
+                  };
 
-                transporter.sendMail(mailOptions, (emailErr) => {
-                  if (emailErr) {
-                    console.error('Error sending issue email:', emailErr);
-                  } else {
-                    console.log('Issue notification email sent to:', user.email);
-                  }
-                });
+                  transporter.sendMail(mailOptions, (emailErr) => {
+                    if (emailErr) {
+                      console.error('❌ Error sending issue email:', emailErr);
+                    } else {
+                      console.log('✅ Issue notification email sent successfully to:', user.email);
+                    }
+                  });
+                } else {
+                  console.error('❌ User has no email address in database!');
+                }
 
                 res.json({
                   success: true,
@@ -1355,7 +1152,7 @@ app.post('/api/issue-book', (req, res) => {
 // Get user's borrowed books
 app.get('/api/borrowed-books/:user_id', (req, res) => {
   const { user_id } = req.params;
-  
+
   db.all(
     `SELECT bb.id, bb.book_id, bb.book_barcode, bb.issued_date, bb.due_date, bb.return_date, bb.status,
             b.title, b.author, b.category, b.cover_image_base64
@@ -1376,7 +1173,7 @@ app.get('/api/borrowed-books/:user_id', (req, res) => {
 // Return a borrowed book (with barcode and cover verification)
 app.post('/api/return-book-new', (req, res) => {
   const { borrowing_id, book_barcode, return_cover_image_base64 } = req.body;
-  
+
   if (!borrowing_id || !book_barcode) {
     return res.status(400).json({ success: false, message: 'Borrowing ID and barcode required' });
   }
@@ -1391,7 +1188,7 @@ app.post('/api/return-book-new', (req, res) => {
       if (err) {
         return res.status(500).json({ success: false, message: 'Database error' });
       }
-      
+
       if (!record) {
         return res.status(400).json({ success: false, message: 'Borrowing record not found' });
       }
@@ -1405,11 +1202,6 @@ app.post('/api/return-book-new', (req, res) => {
       if (return_cover_image_base64 && record.cover_image_base64) {
         coverVerification = compareBookCovers(return_cover_image_base64, record.cover_image_base64);
       }
-
-      // If cover match is critical, you can enforce it:
-      // if (!coverVerification.match) {
-      //   return res.status(400).json({ success: false, message: `Return cover verification failed (${coverVerification.similarity}% match)`, verification: coverVerification });
-      // }
 
       const returnDate = new Date().toISOString();
 
@@ -1439,11 +1231,11 @@ app.post('/api/return-book-new', (req, res) => {
                 }
 
                 // Send email notification
-                const returnDateTime = new Date(returnDate).toLocaleString('en-IN', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric', 
-                  hour: '2-digit', 
+                const returnDateTime = new Date(returnDate).toLocaleString('en-IN', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                  hour: '2-digit',
                   minute: '2-digit',
                   second: '2-digit'
                 });
@@ -1502,7 +1294,7 @@ app.post('/api/return-book-new', (req, res) => {
 // Reissue a book (extend due date by 7 more days)
 app.post('/api/reissue-book', (req, res) => {
   const { borrowing_id, book_barcode, reissue_cover_image_base64 } = req.body;
-  
+
   if (!borrowing_id || !book_barcode) {
     return res.status(400).json({ success: false, message: 'Borrowing ID and barcode required' });
   }
@@ -1517,7 +1309,7 @@ app.post('/api/reissue-book', (req, res) => {
       if (err) {
         return res.status(500).json({ success: false, message: 'Database error' });
       }
-      
+
       if (!record) {
         return res.status(400).json({ success: false, message: 'Active borrowing not found' });
       }
@@ -1531,11 +1323,6 @@ app.post('/api/reissue-book', (req, res) => {
       if (reissue_cover_image_base64 && record.cover_image_base64) {
         coverVerification = compareBookCovers(reissue_cover_image_base64, record.cover_image_base64);
       }
-
-      // If cover match is critical, you can enforce it:
-      // if (!coverVerification.match) {
-      //   return res.status(400).json({ success: false, message: `Reissue cover verification failed (${coverVerification.similarity}% match)`, verification: coverVerification });
-      // }
 
       // Extend due date by 7 days
       const currentDue = new Date(record.due_date);
@@ -1556,17 +1343,17 @@ app.post('/api/reissue-book', (req, res) => {
             }
 
             // Send email notification
-            const reissueDateTime = new Date().toLocaleString('en-IN', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric', 
-              hour: '2-digit', 
+            const reissueDateTime = new Date().toLocaleString('en-IN', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
               minute: '2-digit',
               second: '2-digit'
             });
-            const newDueDateStr = newDueDate.toLocaleString('en-IN', { 
-              year: 'numeric', 
-              month: 'long', 
+            const newDueDateStr = newDueDate.toLocaleString('en-IN', {
+              year: 'numeric',
+              month: 'long',
               day: 'numeric'
             });
 
@@ -1623,7 +1410,7 @@ app.post('/api/reissue-book', (req, res) => {
 // Get user by ID (includes photo)
 app.get('/api/user/:user_id', (req, res) => {
   const { user_id } = req.params;
-  
+
   if (!user_id) {
     return res.status(400).json({ success: false, message: 'User ID required' });
   }
